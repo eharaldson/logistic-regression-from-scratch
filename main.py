@@ -1,6 +1,15 @@
 from sklearn import datasets, model_selection
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import time
+
+def fit_timer(func):
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        func(*args, **kwargs)
+        print(f"Time taken to train the model: {round(time.time()-start, 6)} seconds")
+    return wrapper
 
 class BinaryLogisticRegression:
 
@@ -28,7 +37,7 @@ class BinaryLogisticRegression:
         return 1 / (1 + np.exp(-z))
 
     def _calculate_loss(self, X, y):
-        
+
         m = len(y)
         logit = X @ self.w + self.b
 
@@ -46,7 +55,8 @@ class BinaryLogisticRegression:
         self.w = self.w - lr*dLdw
         self.b = self.b - lr*dLdb
 
-    def fit(self, X, y, lr=0.001):
+    @fit_timer
+    def fit(self, X, y, lr=0.001, verbose=True):
 
         n_features = X.shape[1]
         self._initialise(n_features)
@@ -58,8 +68,9 @@ class BinaryLogisticRegression:
             loss = self._calculate_loss(X, y)
             all_losses.append(loss)
 
-            if i % 100 == 0:
-                print(f'Iteration {i}, Loss = {loss}')
+            if verbose == True:
+                if i % 100 == 0:
+                    print(f'Iteration {i}, Loss = {loss}')
 
             self._step(X, y, lr)
 
@@ -67,7 +78,7 @@ class BinaryLogisticRegression:
                 if (all_losses[-2] - all_losses[-1])/all_losses[-2] < 0.00001:
                     break
 
-        return all_losses
+        self._losses = all_losses
 
     def _accuracy_score(self, prediction_labels, target_labels):
         correct_scores = prediction_labels == target_labels
@@ -103,7 +114,6 @@ class BinaryLogisticRegression:
 
         return prediction_labels
         
-
 if __name__ == "__main__":
 
     X, y = datasets.load_breast_cancer(return_X_y=True)
@@ -116,7 +126,7 @@ if __name__ == "__main__":
     print(model.score(X_test, y_test))
 
     plt.figure()
-    plt.plot(losses)
+    plt.plot(model._losses)
     plt.xlabel('Iterations')
     plt.ylabel('Average Loss')
     plt.title('Binary Cross Entropy loss with logits vs Iterations')
