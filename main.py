@@ -29,17 +29,12 @@ class BinaryLogisticRegression:
 
     def _calculate_loss(self, X, y):
         
-        total_loss = 0
         m = len(y)
+        logit = X @ self.w + self.b
 
-        for i in range(m):
-            logit = np.dot(X[i,:], self.w) + self.b
-            loss = np.max([0, logit]) - y[i]*logit + np.log(1 + np.exp(-abs(logit)))
-            total_loss += loss
+        average_loss_vectorised = np.sum( np.max(np.vstack((logit, m*[0])), axis=0) - logit*y + np.log(1 + np.exp(-abs(logit))) ) / m
 
-        average_loss = total_loss / m
-
-        return average_loss
+        return average_loss_vectorised
 
     def _step(self, X, y, lr):
 
