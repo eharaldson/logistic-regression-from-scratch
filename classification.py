@@ -13,7 +13,16 @@ def fit_timer(func):
     return wrapper
 
 class BinaryLogisticRegression:
+    '''
+    This class is used to represent a binary logistic regression module.
 
+    Attributes:
+        max_iter (int): the maximum iterations to train the model.
+        w (array): the weights of the model.
+        b (float): the bias of the model.
+        mean_X [array]: the mean values of each feature to be used in standardizing data.
+        std_X [array]: the standard deviation values of each feature to be used in standardizing data.
+    '''
     def __init__(self, max_iterations=500):
         self.max_iter = max_iterations
         self.w = []
@@ -22,11 +31,23 @@ class BinaryLogisticRegression:
         self.std_X = []
 
     def _initialise(self, n_features):
+        """ Initialises the random weights and bias of the model with the correct dimensions
+
+        Args:
+            n_features (int): the number of features in the data.
+        """
         self.w = np.random.randn(n_features)
         self.b = np.random.rand()
 
     def _standarize(self, X):
+        """ Standardizes the data. 
 
+        Args:
+            X (array): the data to be standardized.
+
+        Returns:
+            standardized_X: the standardized data
+        """
         if len(self.mean_X) == 0:
             self.mean_X = np.mean(X, axis=0)
             self.std_X = np.std(X, axis=0)
@@ -35,19 +56,41 @@ class BinaryLogisticRegression:
         return standardized_X
 
     def _sigmoid(self, z):
+        """ The sigmoid function.
+
+        Args:
+            z (float or array): the input to apply the sigmoid function to.
+
+        Returns:
+            output: the output of the sigmoid function.
+        """
         return 1 / (1 + np.exp(-z))
 
     def _calculate_loss(self, X, y):
+        """ Calculates the Binary Cross Entropy loss with logits.
 
+        Args:
+            X (array): the matrix of feature data.
+            y (array): the array of labels.
+
+        Returns:
+            average_loss: the average BCE loss.
+        """
         m = len(y)
         logit = X @ self.w + self.b
 
-        average_loss_vectorised = np.sum( np.max(np.vstack((logit, m*[0])), axis=0) - logit*y + np.log(1 + np.exp(-abs(logit))) ) / m
+        average_loss = np.sum( np.max(np.vstack((logit, m*[0])), axis=0) - logit*y + np.log(1 + np.exp(-abs(logit))) ) / m
 
-        return average_loss_vectorised
+        return average_loss
 
     def _step(self, X, y, lr):
+        """ Updates the parameters of the model using gradient descent.
 
+        Args:
+            X (array): the feature data.
+            y (array): the label data.
+            lr (float): the learning rate.
+        """
         logit = X @ self.w + self.b
 
         dLdw = X.T @ (self._sigmoid(logit) - y)
@@ -57,7 +100,16 @@ class BinaryLogisticRegression:
         self.b = self.b - lr*dLdb
 
     def _get_minibatch(self, X, y, size):
+        """ Returns a minibatch of the data to be used in minibatch stochastic gradient descent. 
 
+        Args:
+            X (array): the feature data.
+            y (array): the label data.
+            size (int): the size of the minibatch
+
+        Returns:
+            new_X, new_y: the minibatch data.
+        """
         total = len(y)
         used_indices = set()
         while len(used_indices) < size:
@@ -88,7 +140,15 @@ class BinaryLogisticRegression:
 
     @fit_timer
     def fit(self, X, y, lr=0.001, minibatch_size='all_data', verbose=True):
+        """ Fits the model parameters to the input data. 
 
+        Args:
+            X (array): the feature data.
+            y (array): the label data.
+            lr (float): the learning rate.
+            minibatch_size (int): the size of the batches to be used in minibatch gradient descent.
+            verbose (bool): indicates whether an update on the loss should be printed every 100 iterations.
+        """
         n_features = X.shape[1]
         m = len(y)
         self._initialise(n_features)
@@ -117,10 +177,28 @@ class BinaryLogisticRegression:
         self._losses = all_losses
 
     def _accuracy_score(self, prediction_labels, target_labels):
+        """ Returns the accuracy score for predicted labels. 
+
+        Args:
+            prediction_labels (array): the predicted labels.
+            target_labels (array): the ground truth labels.
+
+        Returns:
+            accuracy score: A score of how accurate the labels are -> [0,1]
+        """
         correct_scores = prediction_labels == target_labels
         return np.sum(correct_scores) / len(prediction_labels)
 
     def score(self, X, y):
+        """ Caclulates the accuracy score for some input feature data. 
+
+        Args:
+            X (array): the feature data.
+            y (array): the label data.
+
+        Returns:
+            accuracy score: A score of how accurate the labels are -> [0,1]
+        """
         if len(self.w) == 0:
             raise Exception('Need to fit the model to data.')
 
@@ -136,6 +214,14 @@ class BinaryLogisticRegression:
         return self._accuracy_score(prediction_labels, y)
 
     def predict(self, X):
+        """ Returns the predicted labels for input feature data 
+
+        Args:
+            X (array): the feature data.
+
+        Returns:
+            prediction_labels: the predicted labels
+        """
         if len(self.w) == 0:
             raise Exception('Need to fit the model to data.')
 
