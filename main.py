@@ -2,6 +2,7 @@ from sklearn import datasets, model_selection
 
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 import time
 
 def fit_timer(func):
@@ -55,16 +56,51 @@ class BinaryLogisticRegression:
         self.w = self.w - lr*dLdw
         self.b = self.b - lr*dLdb
 
+    def _get_minibatch(self, X, y, size):
+
+        total = len(y)
+        used_indices = set()
+        while len(used_indices) < size:
+            ind = random.randrange(0, total)
+            try:
+                try:
+                    if ind not in used_indices:
+                        new_X = np.vstack([new_X, X[ind,:]])
+                        new_y = np.vstack([new_y, y[ind]])
+                        used_indices.add(ind)
+                except:
+                    new_X = X[ind,:]
+                    new_y = y[ind]
+                    used_indices.add(ind)
+            except:
+                try:
+                    if ind not in used_indices:
+                        new_X = np.vstack([new_X, X[ind]])
+                        new_y = np.vstack([new_y, y[ind]])
+                        used_indices.add(ind)
+                except:
+                    new_X = X[ind]
+                    new_y = y[ind]
+                    used_indices.add(ind)
+
+        new_y = new_y.reshape(-1)
+        return new_X, new_y
+
     @fit_timer
-    def fit(self, X, y, lr=0.001, verbose=True):
+    def fit(self, X, y, lr=0.001, minibatch_size='all_data', verbose=True):
 
         n_features = X.shape[1]
+        m = len(y)
         self._initialise(n_features)
 
         X = self._standarize(X)
         all_losses = []
 
         for i in range(self.max_iter):
+
+            if type(minibatch_size) != str and minibatch_size < m:
+                X, y = self._get_minibatch(X, y, minibatch_size)
+
             loss = self._calculate_loss(X, y)
             all_losses.append(loss)
 
